@@ -3,77 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Notebooks Escolar</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <title>Gerenciador de Notebooks - Regional Jales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .slide-section { display: none; }
+        .slide-section.active { display: block; }
+        
+        /* Estilos de Impressão */
         @media print {
-            .no-print { display: none; }
+            .no-print { display: none !important; }
+            body { background-color: white; padding: 0; }
+            .print-container { box-shadow: none; border: none; width: 100%; max-width: 100%; margin: 0; padding: 0; }
+            table { font-size: 10px !important; }
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .card-shadow { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans min-h-screen pb-12">
+<body class="text-slate-800">
 
-    <header class="bg-blue-700 text-white shadow-md no-print">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold">Sistema de Alocação de Notebooks</h1>
-                <p class="text-blue-200 text-sm">Controle de estações móveis e distribuição por componentes</p>
+    <header class="bg-[#1e293b] text-white py-4 shadow-lg no-print sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-laptop-code text-sky-400 text-2xl"></i>
+                <div>
+                    <h1 class="text-lg font-bold leading-none uppercase tracking-wider">Gestão de TI</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">DIRETORIA DE ENSINO - JALES</p>
+                </div>
             </div>
-            <div class="flex gap-2 flex-wrap">
-                <button onclick="limparSistema()" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded text-sm font-semibold transition flex items-center gap-1">
-                    🗑️ Novo
+            <div class="flex gap-2 text-xs">
+                <button onclick="limparSistema()" class="bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white px-3 py-2 rounded border border-red-500/50 transition flex items-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Reiniciar
                 </button>
-                <label class="bg-amber-600 hover:bg-amber-700 px-3 py-2 rounded text-sm font-semibold transition cursor-pointer flex items-center gap-1">
-                    📂 Carregar JSON
+                <label class="bg-sky-500/10 hover:bg-sky-500 text-sky-400 hover:text-white px-3 py-2 rounded border border-sky-500/50 transition cursor-pointer flex items-center gap-2">
+                    <i class="fa-solid fa-upload"></i> Carregar
                     <input type="file" id="uploadJson" accept=".json" class="hidden" onchange="carregarBackup(event)">
                 </label>
-                <button onclick="salvarBackup()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded text-sm font-semibold transition flex items-center gap-1">
-                    💾 Salvar Backup
+                <button onclick="salvarBackup()" class="bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white px-3 py-2 rounded border border-emerald-500/50 transition flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i> Backup
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 mt-6 grid grid-cols-1 gap-6 no-print">
+    <main id="mainContainer" class="max-w-7xl mx-auto p-6 space-y-8 no-print">
         
-        <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 class="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
-                <span class="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">1</span>
-                Identificação da Unidade Escolar
-            </h2>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Escola / Unidade:</label>
-                <input type="text" id="nomeEscola" oninput="salvarLocalStorage()" placeholder="Ex: EE Prof. João Diniz" class="w-full md:w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <p class="text-xs text-gray-400 mt-1">Os dados são salvos automaticamente de forma local no navegador.</p>
+        <section class="bg-white p-8 rounded-xl border border-slate-200 card-shadow">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="bg-sky-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold">1</span>
+                <h2 class="text-xl font-bold text-slate-700 uppercase tracking-tight">Identificação da Escola</h2>
             </div>
-        </section>
-
-        <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 class="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
-                <span class="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span>
-                Estações de Equipamentos (Carrinhos de Carga)
-            </h2>
-            <div class="flex flex-wrap items-end gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade de Carrinhos / Estações:</label>
-                    <input type="number" id="qtdEstacoes" min="1" value="1" class="w-32 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Nome Completo da Unidade:</label>
+                    <input type="text" id="nomeEscola" oninput="salvarLocalStorage()" placeholder="Ex: EE Prof. João da Silva" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:bg-white outline-none transition">
                 </div>
-                <button onclick="gerarCamposEstacoes()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition">Configurar Carrinhos</button>
+                <div class="flex items-center text-slate-400 text-sm italic pt-6">
+                    <i class="fa-solid fa-circle-info mr-2"></i>
+                    Os dados permanecem apenas neste navegador e não são enviados para nuvem.
+                </div>
             </div>
-            <div id="containerEstacoes" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4"></div>
         </section>
 
-        <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 class="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
-                <span class="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
-                Modelo da Escola e Grade
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section class="bg-white p-8 rounded-xl border border-slate-200 card-shadow">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="bg-sky-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold">2</span>
+                <h2 class="text-xl font-bold text-slate-700 uppercase tracking-tight">Equipamentos (Estações Móveis)</h2>
+            </div>
+            <div class="flex flex-wrap items-end gap-4 mb-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Modelo de Ensino:</label>
-                    <select id="modeloEscola" onchange="atualizarAulas()" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Total de Carrinhos / Kits:</label>
+                    <input type="number" id="qtdEstacoes" min="1" value="1" class="w-40 p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+                <button onclick="gerarCamposEstacoes()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-lg font-semibold transition shadow-md">
+                    Configurar Carrinhos
+                </button>
+            </div>
+            <div id="containerEstacoes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                </div>
+        </section>
+
+        <section class="bg-white p-8 rounded-xl border border-slate-200 card-shadow">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="bg-sky-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold">3</span>
+                <h2 class="text-xl font-bold text-slate-700 uppercase tracking-tight">Organização das Turmas</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Modelo de Ensino:</label>
+                    <select id="modeloEscola" onchange="atualizarAulas()" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
                         <option value="9">PEI - 9 Horas (9 Aulas/dia)</option>
                         <option value="7">PEI - 7 Horas (7 Aulas/dia)</option>
                         <option value="6">Parcial Diurno (6 Aulas/dia)</option>
@@ -81,155 +108,183 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade de Turmas:</label>
-                    <input type="number" id="qtdTurmas" min="1" value="1" class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Quantas Turmas existem na escola?</label>
+                    <input type="number" id="qtdTurmas" min="1" value="1" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 outline-none">
                 </div>
                 <div class="flex items-end">
-                    <button onclick="configurarTurmas()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition">Confirmar e Abrir Matriz</button>
+                    <button onclick="prepararNomesTurmas()" class="w-full bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-lg font-bold transition shadow-lg">
+                        Próximo: Renomear Turmas
+                    </button>
                 </div>
             </div>
-            <div id="listaNomesTurmas" class="mt-4 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2"></div>
+
+            <div id="areaNomesTurmas" class="hidden">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-tags"></i> Personalize o nome de cada turma:
+                </h3>
+                <div id="listaInputsNomes" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+                    </div>
+                <button onclick="confirmarTurmasGrade()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-lg font-bold transition shadow-lg">
+                    Confirmar e Abrir Grade de Uso
+                </button>
+            </div>
         </section>
 
-        <section id="secaoHorarios" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hidden">
-            <h2 class="text-xl font-bold text-blue-700 mb-2 flex items-center gap-2">
-                <span class="bg-blue-100 text-blue-700 w-7 h-7 rounded-full flex items-center justify-center text-sm">4</span>
-                Grade de Reserva de Notebooks
-            </h2>
-            <p class="text-sm text-gray-500 mb-4">Clique nas células para marcar/desmarcar em quais aulas os notebooks estarão em uso por aquela turma.</p>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Selecione a Turma para Configurar:</label>
-                <select id="selectTurmaGrade" onchange="renderizarGradeHorarios()" class="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        <section id="secaoHorarios" class="bg-white p-8 rounded-xl border border-slate-200 card-shadow hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="bg-sky-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold">4</span>
+                    <h2 class="text-xl font-bold text-slate-700 uppercase tracking-tight">Grade de Alocação Semanal</h2>
+                </div>
+                <div class="w-full md:w-64">
+                    <label class="block text-xs font-bold text-slate-400 mb-1">TURMA EM EDIÇÃO:</label>
+                    <select id="selectTurmaGrade" onchange="renderizarGradeHorarios()" class="w-full p-2 bg-sky-50 border border-sky-300 text-sky-800 font-bold rounded-lg focus:ring-2 focus:ring-sky-500 outline-none"></select>
+                </div>
             </div>
+            
+            <p class="text-sm text-slate-500 mb-4 bg-slate-50 p-3 rounded-lg border-l-4 border-slate-300">
+                <i class="fa-solid fa-mouse-pointer mr-2"></i> Clique nos quadradinhos das aulas em que a turma acima utilizará os notebooks.
+            </p>
 
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[600px] border-collapse border border-gray-200 text-center text-sm">
+            <div class="overflow-x-auto rounded-lg border border-slate-200">
+                <table class="w-full min-w-[700px] text-center text-sm border-collapse">
                     <thead>
-                        <tr class="bg-gray-100">
-                            <th class="border border-gray-200 p-2 w-20">Aula</th>
-                            <th class="border border-gray-200 p-2">Segunda</th>
-                            <th class="border border-gray-200 p-2">Terça</th>
-                            <th class="border border-gray-200 p-2">Quarta</th>
-                            <th class="border border-gray-200 p-2">Quinta</th>
-                            <th class="border border-gray-200 p-2">Sexta</th>
+                        <tr class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-widest">
+                            <th class="p-4 border-b border-slate-200">Aula / Período</th>
+                            <th class="p-4 border-b border-slate-200">Segunda</th>
+                            <th class="p-4 border-b border-slate-200">Terça</th>
+                            <th class="p-4 border-b border-slate-200">Quarta</th>
+                            <th class="p-4 border-b border-slate-200">Quinta</th>
+                            <th class="p-4 border-b border-slate-200">Sexta</th>
                         </tr>
                     </thead>
-                    <tbody id="corpoGrade"></tbody>
+                    <tbody id="corpoGrade" class="divide-y divide-slate-100"></tbody>
                 </table>
             </div>
-        </section>
 
-        <section class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col items-center justify-center gap-4">
-            <h2 class="text-xl font-bold text-blue-700 text-center">Finalizar Distribuição</h2>
-            <button onclick="gerarRelatorio()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-lg shadow transition transform hover:scale-105">
-                👁️ Gerar Relatório e Consolidação
-            </button>
+            <div class="mt-12 flex flex-col items-center gap-4 border-t pt-10">
+                <button onclick="gerarRelatorio()" class="bg-amber-500 hover:bg-amber-600 text-white text-lg font-black px-12 py-5 rounded-2xl shadow-2xl transition transform hover:scale-105 flex items-center gap-3">
+                    <i class="fa-solid fa-chart-line"></i> CONSOLIDAR E GERAR RELATÓRIO
+                </button>
+                <p class="text-slate-400 text-xs font-medium uppercase tracking-widest">Identifique conflitos e imprima o PDF final</p>
+            </div>
         </section>
     </main>
 
-    <div id="areaRelatorio" class="max-w-6xl mx-auto px-4 mt-8 hidden">
-        <div class="bg-white p-8 rounded-lg shadow-md border border-gray-300" id="conteudoPdf">
-            <div class="text-center border-b pb-4 mb-6">
-                <h2 class="text-2xl font-bold text-gray-900" id="printNomeEscola">NOME DA ESCOLA</h2>
-                <h3 class="text-lg text-gray-600 font-semibold">Relatório Unificado de Alocação de Notebooks</h3>
-                <p id="printData" class="text-xs text-gray-400 mt-1"></p>
+    <div id="areaRelatorio" class="hidden min-h-screen bg-slate-100 p-4 md:p-12">
+        <div class="max-w-5xl mx-auto bg-white p-12 rounded-lg shadow-2xl print-container" id="conteudoPdf">
+            
+            <div class="flex justify-between items-start border-b-4 border-slate-900 pb-6 mb-8">
+                <div>
+                    <h2 class="text-3xl font-black text-slate-900 leading-none mb-2 uppercase tracking-tighter" id="printNomeEscola">ESCOLA DE TESTE</h2>
+                    <p class="text-slate-500 font-bold text-sm tracking-widest uppercase">Relatório de Gestão de Infraestrutura Tecnológica</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Regional de Jales</p>
+                    <p id="printData" class="text-xs font-medium text-slate-900"></p>
+                </div>
             </div>
 
-            <div class="mb-6">
-                <h4 class="text-md font-bold text-blue-800 mb-2">1. Capacidade Operacional de Equipamentos</h4>
-                <div id="printEstacoes" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm bg-gray-50 p-4 rounded border"></div>
+            <div class="mb-10">
+                <h4 class="text-xs font-black text-white bg-slate-900 inline-block px-3 py-1 mb-4 uppercase tracking-widest">01. CAPACIDADE DE ATENDIMENTO</h4>
+                <div id="printEstacoes" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs"></div>
             </div>
 
-            <div class="mb-6">
-                <h4 class="text-md font-bold text-blue-800 mb-2">2. Cronograma Semanal de Alocação por Horário</h4>
-                <p class="text-xs text-gray-500 mb-2">Número de notebooks comprometidos por aula / total disponível na Unidade.</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-center border-collapse border border-gray-300 text-xs">
+            <div class="mb-10">
+                <h4 class="text-xs font-black text-white bg-slate-900 inline-block px-3 py-1 mb-4 uppercase tracking-widest">02. CRONOGRAMA SEMANAL CONSOLIDADO</h4>
+                <div class="overflow-hidden border border-slate-300 rounded">
+                    <table class="w-full text-center border-collapse text-[10px]">
                         <thead>
-                            <tr class="bg-gray-100 font-bold">
-                                <th class="border border-gray-300 p-2">Aula</th>
-                                <th class="border border-gray-300 p-2">Segunda</th>
-                                <th class="border border-gray-300 p-2">Terça</th>
-                                <th class="border border-gray-300 p-2">Quarta</th>
-                                <th class="border border-gray-300 p-2">Quinta</th>
-                                <th class="border border-gray-300 p-2">Sexta</th>
+                            <tr class="bg-slate-100 font-bold border-b border-slate-300 text-slate-600">
+                                <th class="p-2 border-r border-slate-300">AULA</th>
+                                <th class="p-2 border-r border-slate-300">SEG</th>
+                                <th class="p-2 border-r border-slate-300">TER</th>
+                                <th class="p-2 border-r border-slate-300">QUA</th>
+                                <th class="p-2 border-r border-slate-300">QUI</th>
+                                <th class="p-2">SEX</th>
                             </tr>
                         </thead>
-                        <tbody id="printCorpoGradeGeral"></tbody>
+                        <tbody id="printCorpoGradeGeral" class="divide-y divide-slate-200"></tbody>
                     </table>
                 </div>
             </div>
 
             <div>
-                <h4 class="text-md font-bold text-blue-800 mb-2">3. Alertas de Conflito de Demanda (Saturação)</h4>
-                <div id="printAlertas" class="text-sm p-4 rounded border"></div>
+                <h4 class="text-xs font-black text-white bg-slate-900 inline-block px-3 py-1 mb-4 uppercase tracking-widest">03. ANÁLISE DE CONFLITOS E DEMANDA</h4>
+                <div id="printAlertas" class="text-xs p-6 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 font-medium"></div>
+            </div>
+
+            <div class="mt-20 grid grid-cols-2 gap-20 text-center">
+                <div class="border-t border-slate-400 pt-2 text-[10px] font-bold uppercase text-slate-500">Coordenação Pedagógica / Proatec</div>
+                <div class="border-t border-slate-400 pt-2 text-[10px] font-bold uppercase text-slate-500">Direção de Escola</div>
             </div>
         </div>
 
-        <div class="flex justify-center gap-4 mt-4 no-print">
-            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-bold transition">🖨️ Imprimir / Salvar PDF</button>
-            <button onclick="fecharRelatorio()" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded font-bold transition">Voltar para Edição</button>
+        <div class="max-w-5xl mx-auto flex justify-center gap-4 mt-10 no-print">
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-black transition flex items-center gap-2">
+                <i class="fa-solid fa-print"></i> IMPRIMIR RELATÓRIO
+            </button>
+            <button onclick="fecharRelatorio()" class="bg-slate-500 hover:bg-slate-600 text-white px-8 py-3 rounded-xl font-black transition flex items-center gap-2">
+                <i class="fa-solid fa-chevron-left"></i> VOLTAR PARA EDIÇÃO
+            </button>
         </div>
     </div>
 
     <script>
-        // Estado Geral do App
+        // Lógica Principal do App
         let dadosApp = {
             nomeEscola: "",
-            estacoes: [],
+            estacoes: [{nome: "Estação 1", qtd: 20}],
             modeloAulas: 9,
-            turmas: {} // Estrutura: { "6ºA": { segunda: [Array de aulas], terca: [] ... } }
+            turmas: {} // { "6ºA": { segunda: [false...], terca: [] } }
         };
 
         const diasSemana = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
 
         window.onload = function() {
-            if (localStorage.getItem('gerenciador_notes_dados')) {
+            const salvo = localStorage.getItem('gerenciador_jales_v2');
+            if (salvo) {
                 try {
-                    dadosApp = JSON.parse(localStorage.getItem('gerenciador_notes_dados'));
+                    dadosApp = JSON.parse(salvo);
                     document.getElementById('nomeEscola').value = dadosApp.nomeEscola || "";
                     document.getElementById('modeloEscola').value = dadosApp.modeloAulas || 9;
                     document.getElementById('qtdEstacoes').value = dadosApp.estacoes.length || 1;
                     
-                    // Restaurar visualizações
                     gerarCamposEstacoes(true);
                     if (Object.keys(dadosApp.turmas).length > 0) {
                         document.getElementById('qtdTurmas').value = Object.keys(dadosApp.turmas).length;
-                        configurarTurmas(true);
+                        prepararNomesTurmas(true);
+                        confirmarTurmasGrade();
                     }
-                } catch (e) {
-                    console.error("Erro ao carregar dados locais", e);
-                }
+                } catch (e) { console.error(e); }
             }
         };
 
         function salvarLocalStorage() {
             dadosApp.nomeEscola = document.getElementById('nomeEscola').value;
             dadosApp.modeloAulas = parseInt(document.getElementById('modeloEscola').value);
-            localStorage.setItem('gerenciador_notes_dados', JSON.stringify(dadosApp));
+            localStorage.setItem('gerenciador_jales_v2', JSON.stringify(dadosApp));
         }
 
+        // --- ESTAÇÕES ---
         function gerarCamposEstacoes(restaurando = false) {
             const qtd = parseInt(document.getElementById('qtdEstacoes').value) || 1;
             const container = document.getElementById('containerEstacoes');
             container.innerHTML = "";
 
             let novasEstacoes = [];
-
-            for (let i = 1; i <= qtd; i++) {
-                let valorAtual = 20; // padrão
-                if (restaurando && dadosApp.estacoes[i-1]) {
-                    valorAtual = dadosApp.estacoes[i-1].qtd;
-                }
-                
-                novasEstacoes.push({ nome: `Estação ${i}`, qtd: valorAtual });
+            for (let i = 0; i < qtd; i++) {
+                let valorAtual = (restaurando && dadosApp.estacoes[i]) ? dadosApp.estacoes[i].qtd : 20;
+                novasEstacoes.push({ nome: `Estação ${i+1}`, qtd: valorAtual });
 
                 const div = document.createElement('div');
-                div.className = "bg-gray-50 p-3 border border-gray-200 rounded flex flex-col gap-1";
+                div.className = "bg-slate-50 p-4 border border-slate-200 rounded-lg flex flex-col gap-2";
                 div.innerHTML = `
-                    <label class="text-xs font-bold text-gray-600">Capacidade da Estação ${i} (Notes):</label>
-                    <input type="number" min="0" value="${valorAtual}" oninput="atualizarQtdEstacao(${i-1}, this.value)" class="p-1 border border-gray-300 rounded">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">KIT / CARRINHO ${i+1}</span>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-battery-three-quarters text-emerald-500"></i>
+                        <input type="number" min="0" value="${valorAtual}" oninput="atualizarQtdEstacao(${i}, this.value)" class="w-full bg-transparent font-bold text-slate-700 outline-none">
+                    </div>
                 `;
                 container.appendChild(div);
             }
@@ -237,257 +292,208 @@
             salvarLocalStorage();
         }
 
-        function atualizarQtdEstacao(index, valor) {
-            dadosApp.estacoes[index].qtd = parseInt(valor) || 0;
+        function atualizarQtdEstacao(idx, val) {
+            dadosApp.estacoes[idx].qtd = parseInt(val) || 0;
             salvarLocalStorage();
         }
 
-        function atualizarAulas() {
-            dadosApp.modeloAulas = parseInt(document.getElementById('modeloEscola').value);
-            salvarLocalStorage();
-            if (Object.keys(dadosApp.turmas).length > 0) {
-                configurarTurmas();
-            }
-        }
-
-        function configurarTurmas(restaurando = false) {
+        // --- TURMAS (NOVO FLUXO) ---
+        function prepararNomesTurmas(restaurando = false) {
             const qtd = parseInt(document.getElementById('qtdTurmas').value) || 1;
-            const containerNomes = document.getElementById('listaNomesTurmas');
-            const selectTurmas = document.getElementById('selectTurmaGrade');
+            const container = document.getElementById('listaInputsNomes');
+            const area = document.getElementById('areaNomesTurmas');
             
-            containerNomes.innerHTML = "";
-            
-            let chavesAtuais = Object.keys(dadosApp.turmas);
-            let novasTurmas = {};
+            container.innerHTML = "";
+            area.classList.remove('hidden');
 
-            for (let i = 1; i <= qtd; i++) {
-                let nomeTurma = chavesAtuais[i-1] || `${i}º Ano A`;
-                
-                if (restaurando) {
-                    novasTurmas[nomeTurma] = dadosApp.turmas[nomeTurma];
-                } else {
-                    novasTurmas[nomeTurma] = dadosApp.turmas[nomeTurma] || criarEstruturaHorarioVazia();
-                }
+            const nomesAtuais = Object.keys(dadosApp.turmas);
 
-                // Cria inputs para renomear turmas facilmente se necessário
-                const input = document.createElement('input');
-                input.type = "text";
-                input.value = nomeTurma;
-                input.className = "p-1.5 border border-gray-300 rounded text-center text-xs font-medium focus:ring-1 focus:ring-blue-500";
-                input.onchange = function() { renomearTurma(nomeTurma, this.value); };
-                containerNomes.appendChild(input);
+            for (let i = 0; i < qtd; i++) {
+                let valorNome = nomesAtuais[i] || `${i+1}º Ano X`;
+                const div = document.createElement('div');
+                div.innerHTML = `<input type="text" value="${valorNome}" data-idx="${i}" class="input-nome-turma w-full p-2 bg-slate-50 border border-slate-200 rounded text-xs font-bold focus:border-sky-500 outline-none">`;
+                container.appendChild(div);
             }
+            
+            // Rolar suavemente para os nomes
+            if(!restaurando) window.scrollTo({ top: container.offsetTop - 100, behavior: 'smooth' });
+        }
+
+        function confirmarTurmasGrade() {
+            const inputs = document.querySelectorAll('.input-nome-turma');
+            let novasTurmas = {};
+            const nomesAtuais = Object.keys(dadosApp.turmas);
+
+            inputs.forEach((input, index) => {
+                const novoNome = input.value.trim() || `Turma ${index+1}`;
+                const nomeAntigo = nomesAtuais[index];
+
+                if (nomeAntigo && dadosApp.turmas[nomeAntigo]) {
+                    // Preserva os dados se já existiam
+                    novasTurmas[novoNome] = dadosApp.turmas[nomeAntigo];
+                } else {
+                    // Cria do zero
+                    novasTurmas[novoNome] = criarEstruturaVazia();
+                }
+            });
 
             dadosApp.turmas = novasTurmas;
             salvarLocalStorage();
 
-            // Atualiza o Select da Grade
-            selectTurmas.innerHTML = "";
-            Object.keys(dadosApp.turmas).forEach(turma => {
+            // Popula o select da grade
+            const select = document.getElementById('selectTurmaGrade');
+            select.innerHTML = "";
+            Object.keys(dadosApp.turmas).forEach(nome => {
                 const opt = document.createElement('option');
-                opt.value = turma;
-                opt.innerText = turma;
-                selectTurmas.appendChild(opt);
+                opt.value = nome;
+                opt.innerText = nome;
+                select.appendChild(opt);
             });
 
             document.getElementById('secaoHorarios').classList.remove('hidden');
             renderizarGradeHorarios();
         }
 
-        function criarEstruturaHorarioVazia() {
-            let estrutura = {};
-            diasSemana.forEach(d => {
-                estrutura[d] = Array(dadosApp.modeloAulas).fill(false);
-            });
-            return estrutura;
-        }
-
-        function renomearTurma(nomeAntigo, nomeNovo) {
-            if (!nomeNovo.trim() || nomeAntigo === nomeNovo) return;
-            if (dadosApp.turmas[nomeNovo]) {
-                alert("Já existe uma turma com esse nome.");
-                configurarTurmas(true);
-                return;
-            }
-            dadosApp.turmas[nomeNovo] = dadosApp.turmas[nomeAntigo];
-            delete dadosApp.turmas[nomeAntigo];
-            salvarLocalStorage();
-            configurarTurmas(true);
+        function criarEstruturaVazia() {
+            let obj = {};
+            diasSemana.forEach(d => obj[d] = Array(dadosApp.modeloAulas).fill(false));
+            return obj;
         }
 
         function renderizarGradeHorarios() {
-            const turmaSelecionada = document.getElementById('selectTurmaGrade').value;
-            if (!turmaSelecionada || !dadosApp.turmas[turmaSelecionada]) return;
+            const turma = document.getElementById('selectTurmaGrade').value;
+            if (!turma || !dadosApp.turmas[turma]) return;
 
             const corpo = document.getElementById('corpoGrade');
             corpo.innerHTML = "";
-            const aulasTotais = dadosApp.modeloAulas;
-            const horarioTurma = dadosApp.turmas[turmaSelecionada];
+            const totalAulas = dadosApp.modeloAulas;
 
-            // Forçar ajuste do tamanho caso mude o modelo de escola dinamicamente
-            diasSemana.forEach(d => {
-                if (horarioTurma[d].length !== aulasTotais) {
-                    horarioTurma[d] = Array(aulasTotais).fill(false);
-                }
-            });
-
-            for (let i = 0; i < aulasTotais; i++) {
+            for (let i = 0; i < totalAulas; i++) {
                 const tr = document.createElement('tr');
-                
-                // Coluna identificadora da aula
-                const tdNum = document.createElement('td');
-                tdNum.className = "border border-gray-200 p-3 font-bold bg-gray-50 text-blue-800";
-                tdNum.innerText = `${i+1}ª Aula`;
-                tr.appendChild(tdNum);
+                tr.innerHTML = `<td class="p-4 border-r bg-slate-50 font-bold text-slate-500 text-xs">${i+1}ª Aula</td>`;
 
-                // Colunas dos dias da semana
                 diasSemana.forEach(dia => {
-                    const tdDia = document.createElement('td');
-                    const estaAtivo = horarioTurma[dia][i];
+                    const ativo = dadosApp.turmas[turma][dia][i];
+                    const td = document.createElement('td');
+                    td.className = `p-4 cursor-pointer transition-all border-r border-slate-100 ${ativo ? 'bg-sky-500 text-white font-bold' : 'hover:bg-sky-50 text-slate-300'}`;
+                    td.innerHTML = ativo ? '<i class="fa-solid fa-check-double mr-1"></i> RESERVADO' : '<i class="fa-solid fa-plus text-[10px]"></i>';
                     
-                    tdDia.className = `border border-gray-200 p-3 cursor-pointer transition font-semibold select-none ${estaAtivo ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-white text-gray-400 hover:bg-gray-100'}`;
-                    tdDia.innerText = estaAtivo ? "💻 EM USO" : "Disponível";
-                    
-                    tdDia.onclick = function() {
-                        horarioTurma[dia][i] = !horarioTurma[dia][i];
+                    td.onclick = () => {
+                        dadosApp.turmas[turma][dia][i] = !dadosApp.turmas[turma][dia][i];
                         salvarLocalStorage();
                         renderizarGradeHorarios();
                     };
-
-                    tr.appendChild(tdDia);
+                    tr.appendChild(td);
                 });
-
                 corpo.appendChild(tr);
             }
         }
 
-        function calcularTotalNotebooks() {
-            return dadosApp.estacoes.reduce((acc, est) => acc + est.qtd, 0);
-        }
-
+        // --- RELATÓRIO ---
         function gerarRelatorio() {
-            const totalDisponivel = calcularTotalNotebooks();
-            if (totalDisponivel === 0) {
-                alert("Atenção: Configure a quantidade de notebooks disponíveis no Passo 2 antes de gerar o relatório.");
-                return;
+            if (dadosApp.estacoes.reduce((a,b) => a + b.qtd, 0) === 0) {
+                return alert("Erro: Defina a quantidade de notebooks nos carrinhos primeiro!");
             }
 
-            document.getElementById('main').style.display = 'none';
-            document.querySelector('header').style.display = 'none';
+            // Interface
+            document.getElementById('mainContainer').classList.add('hidden');
+            document.querySelector('header').classList.add('hidden');
             document.getElementById('areaRelatorio').classList.remove('hidden');
+            window.scrollTo(0,0);
 
-            document.getElementById('printNomeEscola').innerText = dadosApp.nomeEscola.toUpperCase() || "UNIDADE ESCOLAR NÃO IDENTIFICADA";
-            document.getElementById('printData').innerText = `Documento consolidado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+            // Dados Topo
+            document.getElementById('printNomeEscola').innerText = dadosApp.nomeEscola.toUpperCase() || "NOME DA ESCOLA NÃO INFORMADO";
+            document.getElementById('printData').innerText = new Date().toLocaleString('pt-BR');
 
-            // 1. Mostrar Capacidade Operacional
-            const divEst = document.getElementById('printEstacoes');
-            divEst.innerHTML = "";
-            dadosApp.estacoes.forEach(est => {
-                divEst.innerHTML += `<div><strong>${est.nome}:</strong> ${est.qtd} un.</div>`;
+            // 1. Capacidade
+            const pEst = document.getElementById('printEstacoes');
+            pEst.innerHTML = "";
+            dadosApp.estacoes.forEach(e => {
+                pEst.innerHTML += `<div class="bg-slate-50 p-2 border rounded"><strong>${e.nome}:</strong> ${e.qtd} notes</div>`;
             });
-            divEst.innerHTML += `<div class="col-span-2 sm:col-span-4 font-bold border-t pt-1 text-blue-900">Total Geral Disponível: ${totalDisponivel} Notebooks</div>`;
 
-            // 2 e 3. Construir Grade Geral de Uso e Mapear Saturações
+            // 2. Tabela de Conflitos
             const corpoGeral = document.getElementById('printCorpoGradeGeral');
             corpoGeral.innerHTML = "";
             const alertasDiv = document.getElementById('printAlertas');
             alertasDiv.innerHTML = "";
-            
-            let temConflitoGlobal = false;
+            let conflitosEncontrados = 0;
 
             for (let i = 0; i < dadosApp.modeloAulas; i++) {
                 const tr = document.createElement('tr');
-                const tdNum = document.createElement('td');
-                tdNum.className = "border border-gray-300 p-2 font-bold bg-gray-50";
-                tdNum.innerText = `${i+1}ª Aula`;
-                tr.appendChild(tdNum);
+                tr.innerHTML = `<td class="p-2 border-r border-slate-300 bg-slate-50 font-bold">${i+1}ª</td>`;
 
                 diasSemana.forEach(dia => {
-                    let notesNestaAula = 0;
-                    let turmasUtilizando = [];
-
-                    Object.keys(dadosApp.turmas).forEach(turma => {
-                        if (dadosApp.turmas[turma][dia] && dadosApp.turmas[turma][dia][i]) {
-                            notesNestaAula += 1; // Assume 1 carrinho/kit por sala. Ajustar conforme demanda.
-                            turmasUtilizando.push(turma);
-                        }
+                    let turmasUsando = [];
+                    Object.keys(dadosApp.turmas).forEach(t => {
+                        if(dadosApp.turmas[t][dia][i]) turmasUsando.push(t);
                     });
 
                     const td = document.createElement('td');
-                    td.className = "border border-gray-300 p-2";
+                    td.className = "p-2 border-r border-slate-300";
                     
-                    // Lógica de Saturação: Se houver mais turmas precisando de note do que carrinhos disponíveis
-                    // Para fins pedagógicos/logísticos, se o número de salas usando ultrapassa a capacidade ou o número de estações
-                    const numCarrinhosNecessarios = turmasUtilizando.length;
-                    const numCarrinhosDisponiveis = dadosApp.estacoes.length;
+                    const numCarrinhos = dadosApp.estacoes.length;
+                    const demanda = turmasUsando.length;
 
-                    if (numCarrinhosNecessarios > numCarrinhosDisponiveis) {
-                        td.className += " bg-red-100 text-red-700 font-bold";
-                        td.innerHTML = `⚠️ ${numCarrinhosNecessarios} salas<br>(${turmasUtilizando.join(', ')})`;
-                        
-                        alertasDiv.innerHTML += `<div class="text-red-700 mb-1">❌ <strong>${dia.toUpperCase()} (${i+1}ª Aula):</strong> Saturação de infraestrutura! Existem ${numCarrinhosNecessarios} turmas tentando usar notebooks simultaneamente, mas a escola possui apenas ${numCarrinhosDisponiveis} carrinho(s). Faltam equipamentos para atender as turmas: ${turmasUtilizando.join(', ')}.</div>`;
-                        temConflitoGlobal = true;
-                    } else if (numCarrinhosNecessarios > 0) {
-                        td.className += " bg-emerald-50 text-emerald-800 font-medium";
-                        td.innerHTML = `💻 ${numCarrinhosNecessarios} sala(s)<br><span class="text-[10px] text-gray-500">${turmasUtilizando.join(', ')}</span>`;
+                    if (demanda > numCarrinhos) {
+                        td.className += " bg-red-500 text-white font-bold";
+                        td.innerHTML = `⚠️ EXCESSO: ${demanda}`;
+                        conflitosEncontrados++;
+                        alertasDiv.innerHTML += `<div class="text-red-600 mb-2">● No dia <strong>${dia.toUpperCase()}</strong> na <strong>${i+1}ª Aula</strong>, há ${demanda} turmas agendadas (${turmasUsando.join(', ')}), porém a escola só possui ${numCarrinhos} carrinho(s).</div>`;
+                    } else if (demanda > 0) {
+                        td.className += " bg-emerald-50 text-emerald-700";
+                        td.innerHTML = `<strong>${demanda}</strong> <br><span class="text-[8px]">${turmasUsando.join(',')}</span>`;
                     } else {
-                        td.className += " text-gray-300";
                         td.innerText = "-";
                     }
                     tr.appendChild(td);
                 });
-
                 corpoGeral.appendChild(tr);
             }
 
-            if (!temConflitoGlobal) {
-                alertasDiv.innerHTML = `<div class="text-emerald-700 font-medium">✅ Todos os horários estão compatíveis com a capacidade de carrinhos/notebooks instalada. Sem pontos de saturação identificados!</div>`;
+            if (conflitosEncontrados === 0) {
+                alertasDiv.innerHTML = `<div class="text-emerald-700"><i class="fa-solid fa-circle-check mr-2"></i> CRONOGRAMA VALIDADO: O número de turmas agendadas simultaneamente é compatível com a quantidade de carrinhos físicos da unidade escolar.</div>`;
             }
         }
 
         function fecharRelatorio() {
-            document.getElementById('main').style.display = 'block';
-            document.querySelector('header').style.display = 'flex';
             document.getElementById('areaRelatorio').classList.add('hidden');
+            document.getElementById('mainContainer').classList.remove('hidden');
+            document.querySelector('header').classList.remove('hidden');
         }
 
+        // --- BACKUP E LIMPEZA ---
         function salvarBackup() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dadosApp));
-            const downloadAnchor = document.createElement('a');
-            const nomeArquivo = (dadosApp.nomeEscola || 'backup').toLowerCase().replace(/\s+/g, '_');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `gerenciador_notes_${nomeArquivo}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const blob = new Blob([JSON.stringify(dadosApp)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `grade_notes_${dadosApp.nomeEscola || 'escola'}.json`;
+            a.click();
         }
 
-        function carregarBackup(event) {
-            const input = event.target;
+        function carregarBackup(e) {
             const reader = new FileReader();
-            reader.onload = function() {
-                try {
-                    const jsonVal = JSON.parse(reader.result);
-                    if (jsonVal.estacoes && jsonVal.turmas) {
-                        dadosApp = jsonVal;
-                        localStorage.setItem('gerenciador_notes_dados', JSON.stringify(dadosApp));
-                        alert("Backup carregado com sucesso!");
-                        location.reload();
-                    } else {
-                        alert("Formato de arquivo inválido.");
-                    }
-                } catch (e) {
-                    alert("Erro ao ler o arquivo JSON.");
-                }
+            reader.onload = (ev) => {
+                dadosApp = JSON.parse(ev.target.result);
+                localStorage.setItem('gerenciador_jales_v2', JSON.stringify(dadosApp));
+                location.reload();
             };
-            reader.readAsText(input.files[0]);
+            reader.readAsText(e.target.files[0]);
         }
 
         function limparSistema() {
-            if (confirm("Deseja realmente apagar todas as configurações e começar um novo plano de distribuição?")) {
-                localStorage.removeItem('gerenciador_notes_dados');
+            if(confirm("Deseja apagar tudo e começar do zero?")) {
+                localStorage.removeItem('gerenciador_jales_v2');
                 location.reload();
             }
+        }
+
+        function atualizarAulas() {
+            dadosApp.modeloAulas = parseInt(document.getElementById('modeloEscola').value);
+            salvarLocalStorage();
+            // Re-renderiza a grade se estiver visível
+            if(!document.getElementById('secaoHorarios').classList.contains('hidden')) renderizarGradeHorarios();
         }
     </script>
 </body>
